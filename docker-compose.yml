@@ -3,14 +3,14 @@ version: "3.5"
 x-environment:
   &default-back-environment
   # Database settings
-  POSTGRES_DB: taiga
-  POSTGRES_USER: taiga
-  POSTGRES_PASSWORD: taiga
-  POSTGRES_HOST: taiga-db
+  POSTGRES_DB: ${DOCKER_DB_NAME}
+  POSTGRES_USER: ${DOCKER_DB_USER}
+  POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
+  POSTGRES_HOST:  taiga-db
   # Taiga settings
-  TAIGA_SECRET_KEY: "taiga-back-secret-key"
-  TAIGA_SITES_SCHEME: "http"
-  TAIGA_SITES_DOMAIN: "localhost:9000"
+  TAIGA_SECRET_KEY: ${SECRET_KEY}
+  TAIGA_SITES_SCHEME: ${SCHEME}
+  TAIGA_SITES_DOMAIN: ${DOMAIN}
   TAIGA_SUBPATH: "" # "" or "/subpath"
   # Email settings. Uncomment following lines and configure your SMTP server
   # EMAIL_BACKEND: "django.core.mail.backends.smtp.EmailBackend"
@@ -23,10 +23,10 @@ x-environment:
   # EMAIL_HOST_PASSWORD: "password"
   # Rabbitmq settings
   # Should be the same as in taiga-async-rabbitmq and taiga-events-rabbitmq
-  RABBITMQ_USER: taiga
-  RABBITMQ_PASS: taiga
+  RABBITMQ_USER: ${DOCKER_RABBITMQ_USER}
+  RABBITMQ_PASS: ${DOCKER_RABBITMQ_PASSWORD}
   # Telemetry settings
-  ENABLE_TELEMETRY: "True"
+  ENABLE_TELEMETRY: "False"
 
 x-volumes:
   &default-back-volumes
@@ -39,9 +39,9 @@ services:
   taiga-db:
     image: postgres:12.3
     environment:
-      POSTGRES_DB: taiga
-      POSTGRES_USER: taiga
-      POSTGRES_PASSWORD: taiga
+      POSTGRES_DB:  ${DOCKER_DB_NAME}
+      POSTGRES_USER:  ${DOCKER_DB_USER}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
     volumes:
       - taiga-db-data:/var/lib/postgresql/data
     networks:
@@ -74,8 +74,8 @@ services:
     image: rabbitmq:3.8-management-alpine
     environment:
       RABBITMQ_ERLANG_COOKIE: secret-erlang-cookie
-      RABBITMQ_DEFAULT_USER: taiga
-      RABBITMQ_DEFAULT_PASS: taiga
+      RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: taiga
     volumes:
       - taiga-async-rabbitmq-data:/var/lib/rabbitmq
@@ -85,8 +85,8 @@ services:
   taiga-front:
     image: taigaio/taiga-front:latest
     environment:
-      TAIGA_URL: "http://localhost:9000"
-      TAIGA_WEBSOCKETS_URL: "ws://localhost:9000"
+      TAIGA_URL: "${SCHEME}://${DOMAIN}"
+      TAIGA_WEBSOCKETS_URL: "ws://${DOMAIN}"
       TAIGA_SUBPATH: "" # "" or "/subpath"
     networks:
       - taiga
@@ -96,9 +96,9 @@ services:
   taiga-events:
     image: taigaio/taiga-events:latest
     environment:
-      RABBITMQ_USER: taiga
-      RABBITMQ_PASS: taiga
-      TAIGA_SECRET_KEY: "taiga-back-secret-key"
+      RABBITMQ_USER: ${DOCKER_RABBITMQ_USER}
+      RABBITMQ_PASS: ${DOCKER_RABBITMQ_PASSWORD}
+      TAIGA_SECRET_KEY: ${SECRET_KEY}
     networks:
       - taiga
     depends_on:
@@ -108,8 +108,8 @@ services:
     image: rabbitmq:3.8-management-alpine
     environment:
       RABBITMQ_ERLANG_COOKIE: secret-erlang-cookie
-      RABBITMQ_DEFAULT_USER: taiga
-      RABBITMQ_DEFAULT_PASS: taiga
+      RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: taiga
     volumes:
       - taiga-events-rabbitmq-data:/var/lib/rabbitmq
@@ -120,7 +120,7 @@ services:
     image: taigaio/taiga-protected:latest
     environment:
       MAX_AGE: 360
-      SECRET_KEY: "taiga-back-secret-key"
+      SECRET_KEY: ${SECRET_KEY}
     networks:
       - taiga
 
